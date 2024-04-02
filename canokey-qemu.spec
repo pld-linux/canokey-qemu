@@ -75,7 +75,9 @@ Pliki nagłówkowe biblioteki canokey-qemu.
 %build
 install -d build
 cd build
-%cmake ..
+# set BUILD_SHARED_LIBS to OFF to link libcanokey-core statically into libcanokey-qemu
+%cmake .. \
+	-DBUILD_SHARED_LIBS=OFF
 
 %{__make}
 
