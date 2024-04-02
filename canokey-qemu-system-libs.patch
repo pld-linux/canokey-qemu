@@ -1,0 +1,150 @@
+--- canokey-qemu-151568c34f5e92b086b7a3a62a11c43dd39f628b/CMakeLists.txt.orig	2023-06-05 19:09:03.000000000 +0200
++++ canokey-qemu-151568c34f5e92b086b7a3a62a11c43dd39f628b/CMakeLists.txt	2024-04-01 21:47:48.581666791 +0200
+@@ -27,18 +27,18 @@ if(${APPLE})
+ 	add_library(canokey-qemu STATIC ${SRC} 
+         canokey-core/virt-card/device-sim.c
+         canokey-core/virt-card/fabrication.c
+-        canokey-core/littlefs/bd/lfs_filebd.c)
++        )
+ else()
+ 	add_library(canokey-qemu SHARED ${SRC}
+         canokey-core/virt-card/device-sim.c
+         canokey-core/virt-card/fabrication.c
+-        canokey-core/littlefs/bd/lfs_filebd.c)
++        )
+ endif()
+ set_target_properties(canokey-qemu PROPERTIES PUBLIC_HEADER Inc/canokey-qemu.h)
+ set_target_properties(canokey-qemu PROPERTIES SOVERSION ${LIBCANOKEY_QEMU_SO_VERSION})
+ target_include_directories(canokey-qemu SYSTEM PRIVATE Inc canokey-core/virt-card canokey-core)
+ target_compile_definitions(canokey-qemu PRIVATE HW_VARIANT_NAME="CanoKey QEMU")
+-target_link_libraries(canokey-qemu general canokey-core)
++target_link_libraries(canokey-qemu general canokey-core lfs)
+ add_dependencies(canokey-qemu gitrev)
+ install(TARGETS canokey-qemu LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+--- canokey-qemu-151568c34f5e92b086b7a3a62a11c43dd39f628b/canokey-core/CMakeLists.txt.orig	2022-05-11 16:15:56.000000000 +0200
++++ canokey-qemu-151568c34f5e92b086b7a3a62a11c43dd39f628b/canokey-core/CMakeLists.txt	2024-04-01 21:54:24.789520349 +0200
+@@ -29,8 +29,8 @@ if (DEFINED USBD_PRODUCT_STRING)
+ endif ()
+ 
+ file(GLOB_RECURSE SRC src/*.c applets/*.c interfaces/*.c
+-        littlefs/lfs.c littlefs/lfs_util.c
+-        tinycbor/src/cborencoder.c tinycbor/src/cborparser.c)
++        )
++include_directories("/usr/include/tinycbor")
+ add_library(canokey-core ${SRC})
+ 
+ if (ENABLE_TESTS)
+@@ -47,15 +46,13 @@ endif (ENABLE_FUZZING)
+ target_include_directories(canokey-core SYSTEM
+         PUBLIC
+         include
+-        littlefs
+-        tinycbor/src
+         interfaces/USB/device
+         interfaces/USB/core/inc
+         interfaces/USB/class/ccid
+         interfaces/USB/class/ctaphid
+         interfaces/USB/class/kbdhid
+         interfaces/USB/class/webusb)
+-target_link_libraries(canokey-core canokey-crypto)
++target_link_libraries(canokey-core canokey-crypto lfs tinycbor)
+ 
+ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
+ 
+@@ -81,9 +78,9 @@ if (ENABLE_TESTS)
+             virt-card/device-sim.c
+             virt-card/fabrication.c
+             virt-card/fido-hid-over-udp.c
+-            littlefs/bd/lfs_filebd.c)
+-    target_include_directories(fido-hid-over-udp SYSTEM PRIVATE virt-card littlefs)
+-    target_link_libraries(fido-hid-over-udp general canokey-core "-fsanitize=address")
++            )
++    target_include_directories(fido-hid-over-udp SYSTEM PRIVATE virt-card)
++    target_link_libraries(fido-hid-over-udp general canokey-core lfs "-fsanitize=address")
+ 
+     pkg_search_module(PCSCLITE libpcsclite)
+     if (PCSCLITE_FOUND)
+@@ -92,9 +89,9 @@ if (ENABLE_TESTS)
+                 virt-card/device-sim.c
+                 virt-card/ifdhandler.c
+                 virt-card/fabrication.c
+-                littlefs/bd/lfs_filebd.c)
+-        target_include_directories(u2f-virt-card SYSTEM PRIVATE virt-card ${PCSCLITE_INCLUDE_DIRS} littlefs)
+-        target_link_libraries(u2f-virt-card ${PCSCLITE_LIBRARIES} canokey-core)
++                )
++        target_include_directories(u2f-virt-card SYSTEM PRIVATE virt-card ${PCSCLITE_INCLUDE_DIRS})
++        target_link_libraries(u2f-virt-card ${PCSCLITE_LIBRARIES} lfs canokey-core)
+         add_dependencies(u2f-virt-card gitrev)
+     endif ()
+ endif (ENABLE_TESTS)
+@@ -105,9 +102,9 @@ if (ENABLE_FUZZING)
+             virt-card/usb-dummy.c
+             virt-card/device-sim.c
+             virt-card/fabrication.c
+-            littlefs/bd/lfs_filebd.c)
+-    target_include_directories(honggfuzz-fuzzer SYSTEM PRIVATE virt-card littlefs)
+-    target_link_libraries(honggfuzz-fuzzer canokey-core)
++            )
++    target_include_directories(honggfuzz-fuzzer SYSTEM PRIVATE virt-card)
++    target_link_libraries(honggfuzz-fuzzer canokey-core lfs)
+     add_dependencies(honggfuzz-fuzzer gitrev)
+ 
+     add_executable(honggfuzz-debug
+@@ -116,8 +113,8 @@ if (ENABLE_FUZZING)
+             virt-card/usb-dummy.c
+             virt-card/device-sim.c
+             virt-card/fabrication.c
+-            littlefs/bd/lfs_filebd.c)
+-    target_include_directories(honggfuzz-debug SYSTEM PRIVATE virt-card littlefs)
+-    target_link_libraries(honggfuzz-debug canokey-core)
++            )
++    target_include_directories(honggfuzz-debug SYSTEM PRIVATE virt-card)
++    target_link_libraries(honggfuzz-debug canokey-core lfs)
+     add_dependencies(honggfuzz-debug gitrev)
+ endif (ENABLE_FUZZING)
+--- canokey-qemu-151568c34f5e92b086b7a3a62a11c43dd39f628b/canokey-core/virt-card/fabrication.c.orig	2022-05-11 16:15:56.000000000 +0200
++++ canokey-qemu-151568c34f5e92b086b7a3a62a11c43dd39f628b/canokey-core/virt-card/fabrication.c	2024-04-01 21:55:06.385961668 +0200
+@@ -9,7 +9,7 @@
+ #include <aes.h>
+ #include <apdu.h>
+ #include <assert.h>
+-#include <bd/lfs_filebd.h>
++#include <lfs_filebd.h>
+ #include <ctap.h>
+ #include <fs.h>
+ #include <lfs.h>
+@@ -15,6 +15,7 @@
+ #include <lfs.h>
+ 
+ static struct lfs_config cfg;
++static struct lfs_filebd_config bdcfg;
+ static lfs_filebd_t bd;
+ 
+ uint8_t private_key[] = {0x46, 0x5b, 0x44, 0x5d, 0x8e, 0x78, 0x34, 0x53, 0xf7, 0x4b, 0x90,
+@@ -104,19 +105,20 @@ static void oath_init() {
+ 
+ int card_fs_init(const char *lfs_root) {
+   memset(&cfg, 0, sizeof(cfg));
++  memset(&bdcfg, 0, sizeof(bdcfg));
+   cfg.context = &bd;
+   cfg.read = &lfs_filebd_read;
+   cfg.prog = &lfs_filebd_prog;
+   cfg.erase = &lfs_filebd_erase;
+   cfg.sync = &lfs_filebd_sync;
+-  cfg.read_size = 1;
+-  cfg.prog_size = 512;
+-  cfg.block_size = 512;
+-  cfg.block_count = 256;
++  bdcfg.read_size = cfg.read_size = 1;
++  bdcfg.prog_size = cfg.prog_size = 512;
++  bdcfg.erase_size = cfg.block_size = 512;
++  bdcfg.erase_count = cfg.block_count = 256;
+   cfg.block_cycles = 50000;
+   cfg.cache_size = 512;
+   cfg.lookahead_size = 16;
+-  if (lfs_filebd_create(&cfg, lfs_root)) return 1;
++  if (lfs_filebd_create(&cfg, lfs_root, &bdcfg)) return 1;
+ 
+   int err = fs_mount(&cfg);
+   if (err) { // should happen for the first boot
