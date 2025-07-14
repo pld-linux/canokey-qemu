@@ -68,7 +68,7 @@ Pliki nagłówkowe biblioteki canokey-qemu.
 %{__tar} xf %{SOURCE2} -C canokey-core/canokey-crypto --strip-components=1
 %{__tar} xf %{SOURCE3} -C canokey-core/canokey-crypto/mbedtls --strip-components=1
 
-%patch0 -p1
+%patch -P0 -p1
 
 %{__sed} -i -e 's,git describe --always --tags --long --abbrev=8 --dirty,echo %{core_gitref},' canokey-core/CMakeLists.txt
 
