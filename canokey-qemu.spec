@@ -1,26 +1,26 @@
-%define		core_gitref	e216aa00b95b27c8e6bc5f2907a05e49a0ddafad
-%define		crypto_gitref	8fab8813ce2603ba198a9beeb32c06ad08ae0865
-%define		mbedtls_gitref	f71e2878084126737cc39083e1e15afc459bd93d
+%define		core_gitref		6c8cbf0f68e16f71f3d66d9cbc76115af93324ec
+%define		crypto_gitref		2217732a29d750400778900d17adf8aa6dd77bda
+%define		tfpsacrypto_gitref	76920edddcad00ac41b248e12d937b845df7bedb
+%define		mbedtlsframework_gitref	457996474728cb8e968ed21953b72f74d2f536b2
 Summary:	CanoKey library for QEMU
 Summary(pl.UTF-8):	Biblioteka CanoKey dla QEMU
 Name:		canokey-qemu
-Version:	0
-%define	gitref	151568c34f5e92b086b7a3a62a11c43dd39f628b
-%define	snap	20230606
-%define	rel	1
-Release:	0.%{snap}.%{rel}
+Version:	1
+Release:	1
 License:	Apache v2.0
 Group:		Libraries
 #Source0Download: https://github.com/canokeys/canokey-qemu/tags
-Source0:	https://github.com/canokeys/canokey-qemu/archive/%{gitref}/%{name}-%{snap}.tar.gz
-# Source0-md5:	02b14bbbdbe0e0774f3b8bdb3e201a40
+Source0:	https://github.com/canokeys/canokey-qemu/archive/v%{version}/%{name}-%{version}.tar.gz
+# Source0-md5:	7fb9bdb65d568890a18207a6ddfb757d
 Source1:	https://github.com/canokeys/canokey-core/archive/%{core_gitref}/canokey-core-%{core_gitref}.tar.gz
-# Source1-md5:	68d90de51a4279965e172dc58f3beb5f
+# Source1-md5:	a9fd4f1cf856e6acbea59c70eb7f90d6
 Source2:	https://github.com/canokeys/canokey-crypto/archive/%{crypto_gitref}/canokey-crypto-%{crypto_gitref}.tar.gz
-# Source2-md5:	2f0b6d9c6ededec1fb57f04c2c5b0b7e
-## private mbedtls is patched for MBEDTLS_ECP_DP_ED25519 support
-Source3:	https://github.com/ARMmbed/mbedtls/archive/%{mbedtls_gitref}/mbedtls-%{mbedtls_gitref}.tar.gz
-# Source3-md5:	80fe94ab2e3eb4213d00ba0473dbe71c
+# Source2-md5:	ac72eed51184d4a3d4e27d7f733a66e1
+## private TF-PSA-Crypto is patched for MBEDTLS_ECP_DP_ED25519 support
+Source3:	https://github.com/Mbed-TLS/TF-PSA-Crypto/archive/%{tfpsacrypto_gitref}/TF-PSA-Crypto-%{tfpsacrypto_gitref}.tar.gz
+# Source3-md5:	494ddf8152ee258a831e23db6c54f672
+Source4:	https://github.com/Mbed-TLS/mbedtls-framework/archive/%{mbedtlsframework_gitref}/mbedtls-framework-%{mbedtlsframework_gitref}.tar.gz
+# Source4-md5:	66f38441a31249afed5b34b9d6d95021
 Patch0:		%{name}-system-libs.patch
 URL:		https://github.com/canokeys/canokey-core/
 BuildRequires:	cmake >= 3.7
@@ -62,11 +62,12 @@ Header files for canokey-qemu library.
 Pliki nagłówkowe biblioteki canokey-qemu.
 
 %prep
-%setup -q -n %{name}-%{gitref}
+%setup -q
 
 %{__tar} xf %{SOURCE1} -C canokey-core --strip-components=1
 %{__tar} xf %{SOURCE2} -C canokey-core/canokey-crypto --strip-components=1
-%{__tar} xf %{SOURCE3} -C canokey-core/canokey-crypto/mbedtls --strip-components=1
+%{__tar} xf %{SOURCE3} -C canokey-core/canokey-crypto/tf-psa-crypto --strip-components=1
+%{__tar} xf %{SOURCE4} -C canokey-core/canokey-crypto/tf-psa-crypto/framework --strip-components=1
 
 %patch -P0 -p1
 
@@ -96,10 +97,10 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc README.md
-%attr(755,root,root) %{_libdir}/libcanokey-qemu.so.0
+%{_libdir}/libcanokey-qemu.so.1
 
 %files devel
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_libdir}/libcanokey-qemu.so
+%{_libdir}/libcanokey-qemu.so
 %{_includedir}/canokey-qemu.h
 %{_pkgconfigdir}/canokey-qemu.pc
